@@ -15,7 +15,7 @@ Bootstraps and routes. Writes no feature code, runs no project tests, starts no 
 
 Look for `jrg/tickets/workflow.md`.
 
-- **Present, and the argument is `migrate`** → if `jrg/tickets/migration/` already exists, say a migration is already underway and go to step 1. Otherwise look for existing docs as below; if there are none, say so and go to step 1; if there are, follow [migration/migrate.md](migration/migrate.md) from its step 2 (the scaffold already exists).
+- **Present, and the argument is `migrate`** → if `jrg/tickets/migration/` already exists, say a migration is already underway and go to step 1. Otherwise look for existing docs as below; if there are none, say so and go to step 1; if there are, follow [migration/migrate.md](migration/migrate.md), skipping its scaffold step (the scaffold already exists).
 - **Present** → compare its `<!-- jrg-scaffold: N -->` marker with this skill's `scaffold/jrg/tickets/workflow.md`. If the repo's is older, say so in one line (do not update it unprompted). Go to step 1.
 - **Missing** → the repo is not set up. First explain in three short lines what is about to happen: this workflow keeps work as tickets in `jrg/tickets/` and project knowledge in `jrg/knowledge/`, all plain files in the repo, so any session can pick up where the last one stopped; Claude keeps them current; `/jrg-help` explains more. Then look for existing workflow or planning docs: a `.claude/` folder with docs or commands, `docs/`, `HANDOFF.md`, `STATUS.md`, `TODO*`, `ROADMAP*`, task or ticket folders, plan or spec files, and a `DEVELOPMENT.md` beyond a few lines.
   - **Nothing found** → follow [setup.md](setup.md), then step 1.

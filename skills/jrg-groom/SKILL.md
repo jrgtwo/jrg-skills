@@ -24,6 +24,8 @@ Read the list's header (`What`, `Add when`, `Remove when`). Say how many entries
 3. Recommend one outcome, with the reason in a line.
 4. **Wait.** The user decides.
 
+For pre-migration, if `jrg/tickets/migration/index.md` says `Mode: subagents`, have a subagent check the next few entries against the code while the user decides the current one.
+
 The user can stop at any point. Every decision is written as it is made, so stopping loses nothing; the next session continues at the next entry.
 
 ## Outcomes
