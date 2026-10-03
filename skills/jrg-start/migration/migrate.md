@@ -4,13 +4,15 @@ The migration is **work tracked in the new workflow**, not one long session. Thi
 
 Goals, in order: lose nothing; leave one current copy of each fact; cite nothing stale; keep every session's context small.
 
+The migration never edits `CLAUDE.md`, `AGENTS.md` or `.gitignore`. They are read as sources only and stay where they are.
+
 ## Now, in this session
 
-1. **Scaffold.** Follow [../setup.md](../setup.md) steps 1–3 (copy scaffold, `.gitignore` check, CLAUDE.md section). Do not touch the old docs yet.
+1. **Scaffold.** Follow [../setup.md](../setup.md) step 1 (copy the scaffold). Do not touch the old docs yet.
 2. **Pre-migration list.** Copy [pre-migration-index.md](pre-migration-index.md) to `jrg/tickets/pre-migration/index.md` and add its row to the holding-lists table in `jrg/tickets/index.md`:
    `| [Pre-migration](pre-migration/index.md) | Every work item imported unverified from the old docs, awaiting grooming |`
 3. **Migration initiative.** From the templates, create `jrg/tickets/migration/index.md` (name "Migration", prefix `MIG`), milestone `jrg/tickets/migration/01-migrate/index.md`, and the tickets below in this order. Type in brackets.
-4. Run `python3 jrg/tickets/status.py` and report what was created.
+4. Run `python3 jrg/tickets/status.py` and report in the same fixed form as setup step 3, adding one line for the migration tickets created.
 
 ## The migration tickets
 
@@ -27,7 +29,6 @@ Content kind → target home:
 | Setup, commands, testing, deploy, troubleshooting | `jrg/knowledge/development.md` |
 | Project-specific topics | `jrg/knowledge/<topic>.md` |
 | Any work item: active, done, queued, idea, parked, known issue, dropped | `jrg/tickets/pre-migration/` |
-| Agent behavior rules | `CLAUDE.md`, carried over unchanged |
 | Old workflow commands and skills | `jrg/legacy/` |
 | Specs, audits, mockups, plans | knowledge (still-true parts) + `jrg/legacy/` (the original) |
 
@@ -40,9 +41,7 @@ Mechanical. One entry per item in the pre-migration format, in the old doc's wor
 3. **Checks every factual claim against the code** — use subagents for the checking so this session holds only their conclusions. Fix stale claims; list each fix in the completion evidence.
 4. Shows the user the finished doc's outline and the list of corrections, once, for review.
 
-**MIG-0xx — Rewrite CLAUDE.md** [implementation], depending on the knowledge tickets. Short: commands, conventions, gotchas, the Workflow section, pointers into `jrg/knowledge/`. Anything longer moves to a knowledge doc. Every agent behavior rule the inventory found is carried over unchanged — the migration does not add, drop or reword rules; deduplicate exact repeats only.
-
-**MIG-0xx — Retire the old docs** [implementation], last, depending on everything above. Move every old doc, command and skill into `jrg/legacy/`, keeping relative structure. Add one row per item to `jrg/legacy/README.md`: what it was and where its content went. Then confirm nothing outside `jrg/legacy/` links into it, and run `git check-ignore` on `jrg/` and `CLAUDE.md` once more. Never delete an old doc.
+**MIG-0xx — Retire the old docs** [implementation], last, depending on everything above. Move every old doc, command and skill into `jrg/legacy/`, keeping relative structure — except `CLAUDE.md` and `AGENTS.md`, which stay where they are. Add one row per item to `jrg/legacy/README.md`: what it was and where its content went. Then confirm nothing outside `jrg/legacy/` links into it, and run `git check-ignore -q jrg` once more. Never delete an old doc.
 
 ## After the migration
 

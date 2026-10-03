@@ -28,14 +28,14 @@ For **one clear piece of work**. Large, unclear, or needing several decisions fi
 Most updates are mid-ticket, often at the end of a session. Closing is one possible outcome, not the purpose.
 
 1. **Working state.**
-   - **Acceptance criteria:** check a box only with evidence from this or an earlier session — a command and its result, a reviewed file, a recorded decision. Say what the evidence is.
+   - **Acceptance criteria:** check a box when there is evidence — a command and its result, a reviewed file, a recorded decision, or the user's word. Say what the evidence is.
    - **`Notes and blockers`:** rewrite `Next:` to the concrete next step. Delete what is no longer true. Do not append a session log.
    - **Knowledge:** if this session changed how something works or settled a decision, update the owning doc in `jrg/knowledge/` (or the plan's `decisions.md`) now.
    - **Extra work found:** ask once, listing each item with a recommendation — split it out (required for this ticket → `/jrg-split`), defer it (uncertain → `/jrg-defer`), or backlog it (wanted, not required → `/jrg-backlog`). Write only what the user confirms.
 2. **Status**, only if it actually changed. Edit the ticket's `Status` line — nowhere else.
    - **Blocked:** the precise blocker, who or what resolves it, progress so far. `Status: blocked`; keep `Next:` (what to do once unblocked).
    - **Unblocked:** update the note. `Status: in_progress`.
-   - **Done:** every acceptance box checked and no sub-ticket open. Write `Completion evidence` (date, changed files or commit, verification results, decision references, accepted limitations). Anything worth knowing later must also be in `jrg/knowledge/`. Remove the `Next:` line. `Status: done`.
+   - **Done:** when the user says it is done or committed, that is their confirmation — do not ask them to confirm each acceptance item. Run any remaining checks you can run yourself (tests, typecheck, build) and record the results; ask only about an item you cannot check, such as how something looks in the browser. A failing check is reported, not silently closed. With every box checked and no sub-ticket open, write `Completion evidence` (date, changed files or commit, verification results, decision references, accepted limitations). Anything worth knowing later must also be in `jrg/knowledge/`. Remove the `Next:` line. `Status: done`.
      - A sub-ticket: set the parent's `Next:` to the next open sub-ticket, or back to the parent's own work.
      - The last ticket of a milestone: check its exit criteria, record outcome evidence in the milestone index, and suggest `/jrg-groom deferred`.
    - **Cancelled:** the reason and the replacement or scope decision. `Status: cancelled`.

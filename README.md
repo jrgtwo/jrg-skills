@@ -36,7 +36,6 @@ The small ones (split, defer, backlog) don't need to be remembered: say "defer t
 
 ```text
 README.md
-CLAUDE.md               short; points into jrg/
 jrg/
   knowledge/            how the project works — owned by no workflow
     plans/<slug>/       brief, plan, decision register

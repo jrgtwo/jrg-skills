@@ -3,7 +3,7 @@
 
 ## Layout
 
-Everything the workflow manages lives under `jrg/`. Only `README.md` and `CLAUDE.md` stay at the repository root.
+Everything the workflow manages lives under `jrg/`. It never edits files outside `jrg/`.
 
 ```text
 jrg/
@@ -47,7 +47,7 @@ Future dependent tickets remain `todo`; not every not-yet-ready task is blocked.
 1. Choose a `todo` ticket whose direct dependencies are done and whose milestone entry condition permits the work.
 2. Set its `Status` to `in_progress`, write its `Next:` line and regenerate the views. Prefer finishing a bounded task before starting another.
 3. Implement only its scope. When a decision is made, record it in the owning knowledge doc (or the plan's decision register) in the same change.
-4. Check off acceptance criteria only with evidence: a command and its result, a reviewed file, a recorded decision.
+4. Check off acceptance criteria with evidence: a command and its result, a reviewed file, a recorded decision, or the user's word. When the user says a ticket is done or committed, that is their confirmation; run any remaining checks the agent can run itself instead of asking.
 5. Set `Status` to `done` and write `Completion evidence`: date, changed files or commit, verification results, accepted limitations. **Anything worth knowing later goes into `jrg/knowledge/`, not only into the ticket.**
 6. If blocked, record the concrete blocker, who or what resolves it, and progress so far; set `Status` to `blocked`.
 7. At a milestone exit, record outcome evidence in its index and continue to the next ready ticket.
