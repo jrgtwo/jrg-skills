@@ -27,7 +27,7 @@ Content kind → target home:
 | Setup, commands, testing, deploy, troubleshooting | `docs/knowledge/development.md` |
 | Project-specific topics | `docs/knowledge/<topic>.md` |
 | Any work item: active, done, queued, idea, parked, known issue, dropped | `docs/tickets/pre-migration/` |
-| Agent behavior rules | Listed for the user in the CLAUDE.md ticket |
+| Agent behavior rules | `CLAUDE.md`, carried over unchanged |
 | Old workflow commands and skills | `docs/legacy/` |
 | Specs, audits, mockups, plans | knowledge (still-true parts) + `docs/legacy/` (the original) |
 
@@ -40,7 +40,7 @@ Mechanical. One entry per item in the pre-migration format, in the old doc's wor
 3. **Checks every factual claim against the code** — use subagents for the checking so this session holds only their conclusions. Fix stale claims; list each fix in the completion evidence.
 4. Shows the user the finished doc's outline and the list of corrections, once, for review.
 
-**MIG-0xx — Rewrite CLAUDE.md** [implementation], depending on the knowledge tickets. Short: commands, conventions, gotchas, the Workflow section, pointers into `docs/knowledge/`. Anything longer moves to a knowledge doc. List the agent behavior rules the inventory found and ask the user once which to keep; kept rules go here, the rest are dropped.
+**MIG-0xx — Rewrite CLAUDE.md** [implementation], depending on the knowledge tickets. Short: commands, conventions, gotchas, the Workflow section, pointers into `docs/knowledge/`. Anything longer moves to a knowledge doc. Every agent behavior rule the inventory found is carried over unchanged — the migration does not add, drop or reword rules; deduplicate exact repeats only.
 
 **MIG-0xx — Retire the old docs** [implementation], last, depending on everything above. Move every old doc, command and skill into `docs/legacy/`, keeping relative structure. Add one row per item to `docs/legacy/README.md`: what it was and where its content went. Then confirm nothing outside `docs/legacy/` links into it, and run `git check-ignore` on `docs/` and `CLAUDE.md` once more. Never delete an old doc.
 
