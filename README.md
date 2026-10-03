@@ -8,12 +8,12 @@ This repo is a Claude Code plugin and its own marketplace. In Claude Code, on ea
 
 ```text
 /plugin marketplace add jrgtwo/jrg-skills
-/plugin install jrg-skills@jrg
+/plugin install jrg-skills@jrg-skills
 ```
 
 Nothing is installed outside Claude Code's plugin system: no settings, hooks or rules are changed. To try a local checkout instead, pass its folder: `/plugin marketplace add ~/projects/jrg-skills`.
 
-**Updating:** bump `version` in `.claude-plugin/plugin.json` when releasing a change; machines pick it up with `/plugin marketplace update jrg` and `/plugin update jrg-skills@jrg`.
+**Updating:** bump `version` in `.claude-plugin/plugin.json` when releasing a change; machines pick it up with `/plugin marketplace update jrg-skills` and `/plugin update jrg-skills@jrg-skills`.
 
 ## Skills
 
