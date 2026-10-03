@@ -1,12 +1,12 @@
 ---
 name: jrg-help
 description: What these jrg skills are and how to use them
-when_to_use: Use when the user asks what the jrg skills do, how the workflow works, which jrg command to run, or what the files under docs/tickets or docs/knowledge are for.
+when_to_use: Use when the user asks what the jrg skills do, how the workflow works, which jrg command to run, or what the files under jrg/tickets or jrg/knowledge are for.
 ---
 
 # jrg help
 
-Explain the workflow to someone who has never seen it. Plain words, short, no jargon left undefined. If the user asked about one skill or one part, answer only that. Otherwise give the overview below, adapted to this repo: if `docs/tickets/` exists, mention what is in progress (from `docs/tickets/STATUS.md`); if it does not, say this repo is not set up yet and `/jrg-start` will do it.
+Explain the workflow to someone who has never seen it. Plain words, short, no jargon left undefined. If the user asked about one skill or one part, answer only that. Otherwise give the overview below, adapted to this repo: if `jrg/tickets/` exists, mention what is in progress (from `jrg/tickets/STATUS.md`); if it does not, say this repo is not set up yet and `/jrg-start` will do it.
 
 ## Overview to give
 
@@ -31,8 +31,8 @@ You don't have to remember the small ones: say "defer that" or "put that on the 
 
 **The files** (all in the repo, so they travel with it)
 
-- `docs/tickets/` — the work: tickets grouped into milestones, plus `STATUS.md`, a generated summary of everything in flight.
-- `docs/knowledge/` — how the project works: product, architecture, setup. Kept current, independent of the ticket system.
-- `docs/legacy/` — old notes kept for history.
+- `jrg/tickets/` — the work: tickets grouped into milestones, plus `STATUS.md`, a generated summary of everything in flight.
+- `jrg/knowledge/` — how the project works: product, architecture, setup. Kept current, independent of the ticket system.
+- `jrg/legacy/` — old notes kept for history.
 
 End by asking whether they want to start (`/jrg-start`) — only if the repo is not set up or nothing is in progress.

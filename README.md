@@ -13,7 +13,7 @@ This repo is a Claude Code plugin and its own marketplace. In Claude Code, on ea
 
 Nothing is installed outside Claude Code's plugin system: no settings, hooks or rules are changed. To try a local checkout instead, pass its folder: `/plugin marketplace add ~/projects/jrg-skills`.
 
-**Updating:** bump `version` in `.claude-plugin/plugin.json` with every change you push. On a machine: `/plugin` → **Marketplaces** → **jrg-skills** → **Update marketplace**.
+**Updating:** Claude Code only offers an update when `version` in `.claude-plugin/plugin.json` changes. The repo's pre-commit hook bumps it automatically on any commit that doesn't — enable it once per clone with `git config core.hooksPath .githooks`. On a machine, update from `/plugin` → **Marketplaces** → **jrg-skills** → **Update marketplace**.
 
 ## Skills
 
@@ -36,8 +36,8 @@ The small ones (split, defer, backlog) don't need to be remembered: say "defer t
 
 ```text
 README.md
-CLAUDE.md               short; points into docs/
-docs/
+CLAUDE.md               short; points into jrg/
+jrg/
   knowledge/            how the project works — owned by no workflow
     plans/<slug>/       brief, plan, decision register
   tickets/              this workflow: workflow.md, status.py, STATUS.md (generated),
@@ -45,14 +45,15 @@ docs/
   legacy/               superseded material + an index of where its content went
 ```
 
-Knowledge and tracking are kept apart so the tracking layer can be replaced later without losing anything. The rules every skill follows are in `skills/jrg-start/scaffold/docs/tickets/workflow.md`, which setup copies into each repo.
+Knowledge and tracking are kept apart so the tracking layer can be replaced later without losing anything. The rules every skill follows are in `skills/jrg-start/scaffold/jrg/tickets/workflow.md`, which setup copies into each repo.
 
 ## Layout of this repo
 
 ```text
+.githooks/pre-commit                     bumps the plugin version on every commit
 .claude-plugin/plugin.json               the plugin: lists the skills
 .claude-plugin/marketplace.json          makes this repo installable with /plugin
-skills/jrg-start/scaffold/docs/          copied into a repo at setup
+skills/jrg-start/scaffold/jrg/          copied into a repo at setup
 skills/jrg-start/setup.md                setup for a repo with no workflow docs
 skills/jrg-start/migration/              migration for a repo that has them
 skills/jrg-plan/templates/               brief, plan, decision register

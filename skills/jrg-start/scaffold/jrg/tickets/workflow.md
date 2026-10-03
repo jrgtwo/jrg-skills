@@ -3,17 +3,17 @@
 
 ## Layout
 
-Everything the workflow manages lives under `docs/`. Only `README.md` and `CLAUDE.md` stay at the repository root.
+Everything the workflow manages lives under `jrg/`. Only `README.md` and `CLAUDE.md` stay at the repository root.
 
 ```text
-docs/
+jrg/
   knowledge/    how the project works — kept current, owned by no workflow
     plans/      plan packets, one folder per plan
   tickets/      work tracking — this workflow
   legacy/       superseded material, kept for history and never cited
 ```
 
-**Knowledge and tracking are separate on purpose.** `docs/knowledge/` must make sense without `docs/tickets/`, so the tracking layer can be replaced without losing anything.
+**Knowledge and tracking are separate on purpose.** `jrg/knowledge/` must make sense without `jrg/tickets/`, so the tracking layer can be replaced without losing anything.
 
 ## Sources of truth
 
@@ -21,12 +21,12 @@ docs/
 - Milestone `index.md`: goal, entry conditions, exit criteria, outcome evidence, and the ticket list — **the list order is working order**.
 - Initiative `index.md`: outcome, scope and milestone sequence, plus a ledger table generated from the tickets.
 - [`STATUS.md`](STATUS.md): generated view of every initiative, milestone, active ticket and open plan question, with consistency problems. Read this first.
-- `docs/knowledge/`: how the project works. A ticket that changes how something works updates the owning knowledge doc in the same change.
+- `jrg/knowledge/`: how the project works. A ticket that changes how something works updates the owning knowledge doc in the same change.
 - [Deferred](deferred/index.md), [backlog](backlog/index.md) and, after a migration, [pre-migration](pre-migration/index.md): holding lists outside any initiative.
 
 ## Generated views
 
-`python3 docs/tickets/status.py` reads every ticket's `Status` line, the milestone ticket lists and each plan's decision register, then rewrites `STATUS.md` and each initiative ledger (between its `ledger:begin`/`ledger:end` markers). Never edit those by hand; change the ticket and re-run. **Re-run after every status change, new ticket, reordering or answered question, in the same change.** `--check` exits non-zero if the views are stale or the tickets are inconsistent.
+`python3 jrg/tickets/status.py` reads every ticket's `Status` line, the milestone ticket lists and each plan's decision register, then rewrites `STATUS.md` and each initiative ledger (between its `ledger:begin`/`ledger:end` markers). Never edit those by hand; change the ticket and re-run. **Re-run after every status change, new ticket, reordering or answered question, in the same change.** `--check` exits non-zero if the views are stale or the tickets are inconsistent.
 
 The script's consistency checks: every ticket file is listed in its milestone index exactly once and every listed file exists; IDs are unique; statuses are valid; `in_progress` and `blocked` tickets have a `Next:` line; `Depends on` and `Parent` links resolve; a parent depends on its sub-tickets; nothing is `done` while a dependency is open. Fix reported problems as their own change, not silently.
 
@@ -48,7 +48,7 @@ Future dependent tickets remain `todo`; not every not-yet-ready task is blocked.
 2. Set its `Status` to `in_progress`, write its `Next:` line and regenerate the views. Prefer finishing a bounded task before starting another.
 3. Implement only its scope. When a decision is made, record it in the owning knowledge doc (or the plan's decision register) in the same change.
 4. Check off acceptance criteria only with evidence: a command and its result, a reviewed file, a recorded decision.
-5. Set `Status` to `done` and write `Completion evidence`: date, changed files or commit, verification results, accepted limitations. **Anything worth knowing later goes into `docs/knowledge/`, not only into the ticket.**
+5. Set `Status` to `done` and write `Completion evidence`: date, changed files or commit, verification results, accepted limitations. **Anything worth knowing later goes into `jrg/knowledge/`, not only into the ticket.**
 6. If blocked, record the concrete blocker, who or what resolves it, and progress so far; set `Status` to `blocked`.
 7. At a milestone exit, record outcome evidence in its index and continue to the next ready ticket.
 
@@ -87,10 +87,10 @@ When work on a ticket uncovers additional **required** work, cut a sub-ticket ra
 Large or unclear work is planned before it is ticketed. **A plan is a milestone of tickets**, so it can take days and be resumed by any session.
 
 - The initiative's first milestone is `00-plan`. Its tickets are the plan's passes — typically brief, draft, review, answer questions, consolidate, readiness. A second review round is another ticket.
-- The plan's documents live in `docs/knowledge/plans/<initiative-slug>/`: `brief.md`, `plan.md` and `decisions.md` (the decision register).
+- The plan's documents live in `jrg/knowledge/plans/<initiative-slug>/`: `brief.md`, `plan.md` and `decisions.md` (the decision register).
 - Size is proposed by the agent in the brief, with its reason, and can change: more open questions than expected means another pass; an obvious single change means skip straight to tickets.
 - The plan's last step adds the build milestones after `00-plan`. Build tickets cite plan sections in `Sources:`.
-- When the build is done, the plan's still-true content is folded into the owning knowledge docs and the plan folder moves to `docs/legacy/`.
+- When the build is done, the plan's still-true content is folded into the owning knowledge docs and the plan folder moves to `jrg/legacy/`.
 
 ## Decision questions
 

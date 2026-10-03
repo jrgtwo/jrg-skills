@@ -1,6 +1,6 @@
 {
   "name": "jrg-skills",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "A ticket workflow for Claude Code: session start with repo setup and migration, plans as milestones of tickets with a pausable decision register, tickets, sub-tickets, holding lists and grooming.",
   "author": {
     "name": "jrgtwo"

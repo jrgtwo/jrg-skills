@@ -8,7 +8,7 @@ What the user wants, in their words. Why now.
 
 ## Sources
 
-What this plan is built from: the user's statements (dated), documents they pointed to, the current code. Never `docs/legacy/` as an authority — only as background, labeled.
+What this plan is built from: the user's statements (dated), documents they pointed to, the current code. Never `jrg/legacy/` as an authority — only as background, labeled.
 
 ## What exists today
 

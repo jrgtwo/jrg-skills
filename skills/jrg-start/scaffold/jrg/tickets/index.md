@@ -1,6 +1,6 @@
 # Tickets
 
-Work tracking for this repository. The rules are in [workflow.md](workflow.md); current state is in the generated [STATUS.md](STATUS.md) — run `python3 docs/tickets/status.py` to refresh it. Start a session with `/jrg-start`.
+Work tracking for this repository. The rules are in [workflow.md](workflow.md); current state is in the generated [STATUS.md](STATUS.md) — run `python3 jrg/tickets/status.py` to refresh it. Start a session with `/jrg-start`.
 
 ## Initiatives
 

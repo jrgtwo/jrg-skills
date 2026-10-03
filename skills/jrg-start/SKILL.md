@@ -10,16 +10,16 @@ Bootstraps and routes. Writes no feature code, runs no project tests, starts no 
 
 ## 0. Is this repo set up?
 
-Look for `docs/tickets/workflow.md`.
+Look for `jrg/tickets/workflow.md`.
 
-- **Present** → compare its `<!-- jrg-scaffold: N -->` marker with this skill's `scaffold/docs/tickets/workflow.md`. If the repo's is older, say so in one line (do not update it unprompted). Go to step 1.
-- **Missing** → the repo is not set up. First explain in three short lines what is about to happen: this workflow keeps work as tickets in `docs/tickets/` and project knowledge in `docs/knowledge/`, all plain files in the repo, so any session can pick up where the last one stopped; Claude keeps them current; `/jrg-help` explains more. Then look for existing workflow or planning docs: a `.claude/` folder with docs or commands, `docs/`, `HANDOFF.md`, `STATUS.md`, `TODO*`, `ROADMAP*`, task or ticket folders, plan or spec files, and any `CLAUDE.md` / `AGENTS.md` / `DEVELOPMENT.md` beyond a few lines.
+- **Present** → compare its `<!-- jrg-scaffold: N -->` marker with this skill's `scaffold/jrg/tickets/workflow.md`. If the repo's is older, say so in one line (do not update it unprompted). Go to step 1.
+- **Missing** → the repo is not set up. First explain in three short lines what is about to happen: this workflow keeps work as tickets in `jrg/tickets/` and project knowledge in `jrg/knowledge/`, all plain files in the repo, so any session can pick up where the last one stopped; Claude keeps them current; `/jrg-help` explains more. Then look for existing workflow or planning docs: a `.claude/` folder with docs or commands, `docs/`, `HANDOFF.md`, `STATUS.md`, `TODO*`, `ROADMAP*`, task or ticket folders, plan or spec files, and any `CLAUDE.md` / `AGENTS.md` / `DEVELOPMENT.md` beyond a few lines.
   - **Nothing found** → follow [setup.md](setup.md), then step 1.
   - **Found** → report what was found (paths and line counts, one line each) and say this repo needs a migration. On the user's go-ahead, follow [migration/migrate.md](migration/migrate.md). That sets up the workflow and creates the migration as tickets; then continue at step 1, where the first migration ticket is the recommended pick.
 
 ## 1. Regenerate and read the status
 
-Run `python3 docs/tickets/status.py`, then read `docs/tickets/STATUS.md`. **That is the whole bootstrap read.** Do not read initiative indexes, milestone indexes or ticket files to find out where things stand.
+Run `python3 jrg/tickets/status.py`, then read `jrg/tickets/STATUS.md`. **That is the whole bootstrap read.** Do not read initiative indexes, milestone indexes or ticket files to find out where things stand.
 
 If the script reports problems, list them. Do not fix them here; a fix is its own change once the user agrees. If the script rewrote `STATUS.md` or a ledger, someone changed a ticket without regenerating — say so.
 
@@ -40,7 +40,7 @@ Ask which ticket to work on. Resuming an `in_progress` ticket is the default rec
 Once picked:
 
 - Read the ticket in full, its milestone index and the sources it links.
-- If it was `todo`: confirm its dependencies are done, set `Status: in_progress`, write the `Next:` line at the top of `Notes and blockers`, and run `python3 docs/tickets/status.py`.
+- If it was `todo`: confirm its dependencies are done, set `Status: in_progress`, write the `Next:` line at the top of `Notes and blockers`, and run `python3 jrg/tickets/status.py`.
 - State the ticket's outcome and acceptance criteria back in two or three lines, so a misunderstanding surfaces before work starts.
 
 The session now has one current ticket. The user can switch at any time by saying so.

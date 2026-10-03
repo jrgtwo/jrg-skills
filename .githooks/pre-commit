@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+"""Bump the plugin's patch version on any commit that doesn't bump it itself.
+
+Claude Code only offers a plugin update when `version` in plugin.json changes,
+so every commit to this repo must carry a new version. If the commit already
+changes `version`, this does nothing. Otherwise it bumps the last number
+(0.2.1 -> 0.2.2) and stages plugin.json into the same commit.
+
+Enable once per clone:  git config core.hooksPath .githooks
+"""
+import json
+import subprocess
+import sys
+
+MANIFEST = ".claude-plugin/plugin.json"
+
+
+def git(*args):
+    r = subprocess.run(["git", *args], capture_output=True, text=True)
+    return r.stdout if r.returncode == 0 else None
+
+
+def version_at(rev):
+    text = git("show", f"{rev}:{MANIFEST}")
+    return json.loads(text).get("version") if text else None
+
+
+def main():
+    if not git("diff", "--cached", "--name-only").strip():
+        return 0
+    head, staged = version_at("HEAD"), version_at("")
+    if head is None or staged is None or staged != head:
+        return 0  # first commit, no manifest, or already bumped
+
+    with open(MANIFEST) as f:
+        working_text = f.read()
+    if working_text != git("show", f":{MANIFEST}"):
+        print(f"pre-commit: {MANIFEST} has unstaged changes; stage or bump `version` yourself.", file=sys.stderr)
+        return 1
+
+    parts = staged.split(".")
+    if not parts[-1].isdigit():
+        print(f"pre-commit: can't bump version {staged!r}; bump it yourself.", file=sys.stderr)
+        return 1
+    parts[-1] = str(int(parts[-1]) + 1)
+    new = ".".join(parts)
+
+    data = json.loads(working_text)
+    data["version"] = new
+    with open(MANIFEST, "w") as f:
+        f.write(json.dumps(data, indent=2) + "\n")
+    git("add", MANIFEST)
+    print(f"pre-commit: plugin version {staged} -> {new}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

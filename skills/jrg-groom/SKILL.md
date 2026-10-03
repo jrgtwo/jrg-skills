@@ -9,11 +9,11 @@ argument-hint: "[deferred | backlog | pre-migration]"
 
 $ARGUMENTS
 
-Rules: `docs/tickets/workflow.md` — Holding lists, Grooming. **The user decides every entry; never bulk-classify.**
+Rules: `jrg/tickets/workflow.md` — Holding lists, Grooming. **The user decides every entry; never bulk-classify.**
 
 ## With no list named
 
-Show each list in `docs/tickets/` (deferred, backlog, and pre-migration if it exists) with its entry count and `Last groomed` date, and ask which to groom.
+Show each list in `jrg/tickets/` (deferred, backlog, and pre-migration if it exists) with its entry count and `Last groomed` date, and ask which to groom.
 
 ## With a list named
 
@@ -34,10 +34,10 @@ The user can stop at any point. Every decision is written as it is made, so stop
 - **Deferred → backlog** — move it in the backlog's format.
 - **→ ticket** — create it with `/jrg-ticket`, then remove the entry.
 - **Pre-migration only:**
-  - **History** (it shipped) — add a dated line to `docs/knowledge/history.md` (newest first; create the file if missing), saying what shipped and, if the old doc says, why. Remove the entry.
+  - **History** (it shipped) — add a dated line to `jrg/knowledge/history.md` (newest first; create the file if missing), saying what shipped and, if the old doc says, why. Remove the entry.
   - **→ backlog / → deferred** — rewrite it in that list's format, as checked today, and remove it here.
-  - When pre-migration is empty, delete the folder and its row in `docs/tickets/index.md`.
+  - When pre-migration is empty, delete the folder and its row in `jrg/tickets/index.md`.
 
 ## Finish
 
-Update `Last groomed` in the list's header. Run `python3 docs/tickets/status.py`. Report counts: kept, dropped, merged, promoted, filed as history. An entry that cannot be settled quickly stays, marked `unverified: <date>`. Fixing something found is a ticket, not part of the pass.
+Update `Last groomed` in the list's header. Run `python3 jrg/tickets/status.py`. Report counts: kept, dropped, merged, promoted, filed as history. An entry that cannot be settled quickly stays, marked `unverified: <date>`. Fixing something found is a ticket, not part of the pass.

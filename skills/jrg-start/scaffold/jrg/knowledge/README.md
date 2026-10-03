@@ -1,6 +1,6 @@
 # Knowledge
 
-How this project works, kept current. These docs belong to no workflow: they must make sense without `docs/tickets/`.
+How this project works, kept current. These docs belong to no workflow: they must make sense without `jrg/tickets/`.
 
 | Doc | Owns |
 | --- | --- |

@@ -2,7 +2,7 @@
 
 [Brief](brief.md) · [Plan](plan.md)
 
-The decision register. Written only by the agent; the user answers in conversation. `Status: open | answered | parked`. `docs/tickets/status.py` counts the open and parked entries into `STATUS.md`.
+The decision register. Written only by the agent; the user answers in conversation. `Status: open | answered | parked`. `jrg/tickets/status.py` counts the open and parked entries into `STATUS.md`.
 
 Entry format:
 
