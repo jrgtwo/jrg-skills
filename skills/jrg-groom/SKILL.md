@@ -1,7 +1,8 @@
 ---
 name: jrg-groom
-description: Walk a jrg holding list (deferred, backlog, or pre-migration) one entry at a time with the user — drop, keep, reword, merge, promote, or file as history
-argument-hint: "[optional — deferred | backlog | pre-migration]"
+description: Go through saved lists one item at a time
+when_to_use: Use to review the deferred, backlog, or pre-migration lists entry by entry with the user — drop, keep, reword, merge, promote to a ticket, or file shipped items as history.
+argument-hint: "[deferred | backlog | pre-migration]"
 ---
 
 # Groom a holding list
@@ -31,7 +32,7 @@ The user can stop at any point. Every decision is written as it is made, so stop
 - **Drop** — remove it.
 - **Merge** — fold into another entry; remove this one.
 - **Deferred → backlog** — move it in the backlog's format.
-- **→ ticket** — create it with `/jrg-new-ticket`, then remove the entry.
+- **→ ticket** — create it with `/jrg-ticket`, then remove the entry.
 - **Pre-migration only:**
   - **History** (it shipped) — add a dated line to `docs/knowledge/history.md` (newest first; create the file if missing), saying what shipped and, if the old doc says, why. Remove the entry.
   - **→ backlog / → deferred** — rewrite it in that list's format, as checked today, and remove it here.

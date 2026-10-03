@@ -58,7 +58,7 @@ The ticket files are the only session state; there is no separate handoff docume
 
 - **Start** with `/jrg-start`: regenerate and read `STATUS.md`, then resume or pick a ticket. A session has one current ticket; switching is explicit.
 - **The ticket's `Notes and blockers` section is its working state.** Keep a `Next:` line at the top stating the concrete next step, so anyone can resume cold. Rewrite the section as work moves; delete what is no longer true rather than appending history.
-- **End** (or pause) with `/jrg-update-ticket`.
+- **End** (or pause) with `/jrg-ticket`.
 
 ## Adding and changing work
 
@@ -89,7 +89,7 @@ Large or unclear work is planned before it is ticketed. **A plan is a milestone 
 - The initiative's first milestone is `00-plan`. Its tickets are the plan's passes — typically brief, draft, review, answer questions, consolidate, readiness. A second review round is another ticket.
 - The plan's documents live in `docs/knowledge/plans/<initiative-slug>/`: `brief.md`, `plan.md` and `decisions.md` (the decision register).
 - Size is proposed by the agent in the brief, with its reason, and can change: more open questions than expected means another pass; an obvious single change means skip straight to tickets.
-- `/jrg-plan-to-tickets` adds the build milestones after `00-plan`. Build tickets cite plan sections in `Sources:`.
+- The plan's last step adds the build milestones after `00-plan`. Build tickets cite plan sections in `Sources:`.
 - When the build is done, the plan's still-true content is folded into the owning knowledge docs and the plan folder moves to `docs/legacy/`.
 
 ## Decision questions

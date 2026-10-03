@@ -1,11 +1,12 @@
 ---
-name: jrg-cut-sub-ticket
-description: Split additional required work out of the current jrg ticket into a sub-ticket, placed in working order
+name: jrg-split
+description: Split extra work the current ticket needs into its own ticket
+when_to_use: Use when work on the current ticket turns up additional work that the ticket cannot be finished without — split it out as a sub-ticket rather than widening the ticket.
 ---
 
 # Cut a sub-ticket
 
-For work discovered while on a ticket that is **required for that ticket's acceptance**. Anything else is a later ticket (`/jrg-new-ticket`), backlog (`/jrg-backlog`) or deferred (`/jrg-defer`). Rules: `docs/tickets/workflow.md` — Sub-tickets.
+For work discovered while on a ticket that is **required for that ticket's acceptance**. Anything else is a later ticket (`/jrg-ticket`), backlog (`/jrg-backlog`) or deferred (`/jrg-defer`). Rules: `docs/tickets/workflow.md` — Sub-tickets.
 
 1. **Agree the scope.** Propose in prose: title, its one reviewable outcome, why the parent cannot be accepted without it, and its type. Wait for agreement. Several sub-tickets: agree them one at a time, including order.
 2. **Allocate.** ID = highest ID ever allocated in the initiative + 1 (check filenames; cancelled IDs are never reused). File `<id>-<slug>.md` in the parent's milestone folder, from `docs/tickets/templates/ticket.md`.

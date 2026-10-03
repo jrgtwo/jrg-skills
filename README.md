@@ -17,17 +17,20 @@ Nothing is installed outside Claude Code's plugin system: no settings, hooks or 
 
 ## Skills
 
+Start with `/jrg-start`. Run `/jrg-help` any time for an explanation in Claude.
+
 | Skill | Does |
 | --- | --- |
-| `/jrg-start` | Start a session. Sets the repo up — or migrates it — if needed, then reads the generated status and resumes or picks a ticket |
-| `/jrg-plan` | Plan large or unclear work as a milestone of tickets, with a pausable decision register |
-| `/jrg-plan-to-tickets` | Turn a ready plan into build milestones and tickets |
-| `/jrg-new-ticket` | One ticket for one clear piece of work |
-| `/jrg-update-ticket` | Progress, blocked, or done on the current ticket |
-| `/jrg-cut-sub-ticket` | Required extra work split out of the current ticket |
-| `/jrg-defer` | Something uncertain to look at later |
-| `/jrg-backlog` | Wanted work with no home yet |
-| `/jrg-groom` | Walk deferred, backlog or pre-migration one entry at a time |
+| `/jrg-start` | Start here: see what's in progress, or set up this repo (migrating existing notes if there are any) |
+| `/jrg-plan` | Plan a big or unclear change before building it; ends by turning the plan into tickets |
+| `/jrg-ticket` | Add a ticket, or update the one you're working on (progress, blocked, done) |
+| `/jrg-split` | Split extra work the current ticket needs into its own ticket |
+| `/jrg-defer` | Note something to look at later |
+| `/jrg-backlog` | Note work you want but haven't scheduled |
+| `/jrg-groom` | Go through the deferred, backlog or pre-migration list one item at a time |
+| `/jrg-help` | What these skills are and how to use them |
+
+The small ones (split, defer, backlog) don't need to be remembered: say "defer that" or "add it to the backlog" and Claude uses them, and `/jrg-ticket` asks about extra work when it saves progress.
 
 ## What a set-up repo looks like
 

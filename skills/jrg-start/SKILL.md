@@ -1,6 +1,7 @@
 ---
 name: jrg-start
-description: Start a work session in the jrg ticket workflow — sets the repo up (or migrates it) if needed, then regenerates and reads docs/tickets/STATUS.md and resumes or picks a ticket
+description: "Start here: see what's in progress, or set up this repo"
+when_to_use: Use at the beginning of a work session in a repo, to see current work and pick what to do next. On first use in a repo it sets up the ticket workflow, or migrates existing notes and task docs into it.
 ---
 
 # Start a session
@@ -12,7 +13,7 @@ Bootstraps and routes. Writes no feature code, runs no project tests, starts no 
 Look for `docs/tickets/workflow.md`.
 
 - **Present** → compare its `<!-- jrg-scaffold: N -->` marker with this skill's `scaffold/docs/tickets/workflow.md`. If the repo's is older, say so in one line (do not update it unprompted). Go to step 1.
-- **Missing** → the repo is not set up. Look for existing workflow or planning docs: a `.claude/` folder with docs or commands, `docs/`, `HANDOFF.md`, `STATUS.md`, `TODO*`, `ROADMAP*`, task or ticket folders, plan or spec files, and any `CLAUDE.md` / `AGENTS.md` / `DEVELOPMENT.md` beyond a few lines.
+- **Missing** → the repo is not set up. First explain in three short lines what is about to happen: this workflow keeps work as tickets in `docs/tickets/` and project knowledge in `docs/knowledge/`, all plain files in the repo, so any session can pick up where the last one stopped; Claude keeps them current; `/jrg-help` explains more. Then look for existing workflow or planning docs: a `.claude/` folder with docs or commands, `docs/`, `HANDOFF.md`, `STATUS.md`, `TODO*`, `ROADMAP*`, task or ticket folders, plan or spec files, and any `CLAUDE.md` / `AGENTS.md` / `DEVELOPMENT.md` beyond a few lines.
   - **Nothing found** → follow [setup.md](setup.md), then step 1.
   - **Found** → report what was found (paths and line counts, one line each) and say this repo needs a migration. On the user's go-ahead, follow [migration/migrate.md](migration/migrate.md). That sets up the workflow and creates the migration as tickets; then continue at step 1, where the first migration ticket is the recommended pick.
 
@@ -44,4 +45,4 @@ Once picked:
 
 The session now has one current ticket. The user can switch at any time by saying so.
 
-If the user names work that has no ticket: large or unclear → `/jrg-plan`; one clear piece of work → `/jrg-new-ticket`; required by the current ticket → `/jrg-cut-sub-ticket`.
+If the user names work that has no ticket: large or unclear → `/jrg-plan`; one clear piece of work → `/jrg-ticket`; required by the current ticket → `/jrg-split`.

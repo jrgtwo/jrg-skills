@@ -14,7 +14,7 @@ The path forward, by area. Tag each choice.
 
 ## Milestones
 
-Rough order, each with its one deliverable. These become build milestones in `/jrg-plan-to-tickets`.
+Rough order, each with its one deliverable. These become build milestones when the plan is turned into tickets.
 
 ## Out of scope
 

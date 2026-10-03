@@ -1,6 +1,6 @@
 {
   "name": "jrg-skills",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A ticket workflow for Claude Code: session start with repo setup and migration, plans as milestones of tickets with a pausable decision register, tickets, sub-tickets, holding lists and grooming.",
   "author": {
     "name": "jrgtwo"
@@ -9,12 +9,11 @@
   "skills": [
     "./skills/jrg-start",
     "./skills/jrg-plan",
-    "./skills/jrg-plan-to-tickets",
-    "./skills/jrg-new-ticket",
-    "./skills/jrg-update-ticket",
-    "./skills/jrg-cut-sub-ticket",
+    "./skills/jrg-ticket",
+    "./skills/jrg-split",
     "./skills/jrg-defer",
     "./skills/jrg-backlog",
-    "./skills/jrg-groom"
+    "./skills/jrg-groom",
+    "./skills/jrg-help"
   ]
 }

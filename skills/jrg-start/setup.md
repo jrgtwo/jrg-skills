@@ -13,5 +13,5 @@ Only when `docs/tickets/workflow.md` is missing and nothing needs migrating.
    ```
 
 4. **Generate the views.** Run `python3 docs/tickets/status.py`.
-5. **First work.** Ask what the first piece of work is. Large or unclear → `/jrg-plan`; one clear change → `/jrg-new-ticket`. Neither is required now — an empty board is a valid state.
+5. **First work.** Ask what the first piece of work is. Large or unclear → `/jrg-plan`; one clear change → `/jrg-ticket`. Neither is required now — an empty board is a valid state.
 6. **Report** the files created, one line each.

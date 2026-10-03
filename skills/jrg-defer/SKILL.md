@@ -1,7 +1,8 @@
 ---
 name: jrg-defer
-description: Record something uncertain noticed during a jrg ticket, to look into later
-argument-hint: "[optional — what to defer; inferred from the conversation if omitted]"
+description: Note something to look at later
+when_to_use: Use when the user says to defer, park, or note something for later, or when something uncertain is noticed mid-ticket that may or may not matter.
+argument-hint: "[what to note]"
 ---
 
 # Add a deferred entry
