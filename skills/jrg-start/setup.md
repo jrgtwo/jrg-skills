@@ -1,6 +1,6 @@
 # Setup — a repo with no existing workflow docs
 
-Only when `jrg/tickets/workflow.md` is missing and nothing needs migrating. Setup creates `jrg/` and touches nothing else in the repo — not `CLAUDE.md`, not `.gitignore`.
+Only when `jrg/tickets/workflow.md` is missing and nothing needs migrating. Setup creates `jrg/` and touches nothing else in the repo.
 
 1. **Copy the scaffold.** Copy this skill's `scaffold/jrg/` into the repo root as `jrg/`. Do not create empty knowledge docs; `jrg/knowledge/README.md` lists them and each is written when there is something true to put in it.
 2. **Generate the views.** Run `python3 jrg/tickets/status.py`.
