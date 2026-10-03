@@ -3,7 +3,7 @@
 
 ## Layout
 
-Everything the workflow manages lives under `jrg/`. It never edits files outside `jrg/`.
+Everything the workflow manages lives under `jrg/`. It never edits files outside `jrg/`, and outside a migration it reads only `jrg/` and the code — not other docs in the repo, unless the user points to them.
 
 ```text
 jrg/

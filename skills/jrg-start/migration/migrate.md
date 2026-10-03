@@ -4,6 +4,8 @@ The migration is **work tracked in the new workflow**, not one long session. Thi
 
 Goals, in order: lose nothing; leave one current copy of each fact; cite nothing stale; keep every session's context small.
 
+The user's choice to migrate covers the whole migration: work the tickets in order without asking for a go-ahead between them. Stop only for each knowledge doc's review.
+
 ## Now, in this session
 
 1. **Scaffold.** Follow [../setup.md](../setup.md) step 1 (copy the scaffold). Do not touch the old docs yet.

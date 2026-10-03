@@ -1,10 +1,13 @@
 ---
 name: jrg-start
 description: "Start here: see what's in progress, or set up this repo"
-when_to_use: Use at the beginning of a work session in a repo, to see current work and pick what to do next. On first use in a repo it sets up the ticket workflow, or migrates existing notes and task docs into it.
+when_to_use: Use at the beginning of a work session in a repo, to see current work and pick what to do next. On first use in a repo it sets up the ticket workflow, or migrates existing notes and task docs into it. "/jrg-start migrate" starts a migration in a repo that began clean.
+argument-hint: "[migrate]"
 ---
 
 # Start a session
+
+$ARGUMENTS
 
 Bootstraps and routes. Writes no feature code, runs no project tests, starts no servers: the branch is not guaranteed clean or related to what comes next.
 
@@ -12,10 +15,13 @@ Bootstraps and routes. Writes no feature code, runs no project tests, starts no 
 
 Look for `jrg/tickets/workflow.md`.
 
+- **Present, and the argument is `migrate`** → if `jrg/tickets/migration/` already exists, say a migration is already underway and go to step 1. Otherwise look for existing docs as below; if there are none, say so and go to step 1; if there are, follow [migration/migrate.md](migration/migrate.md) from its step 2 (the scaffold already exists).
 - **Present** → compare its `<!-- jrg-scaffold: N -->` marker with this skill's `scaffold/jrg/tickets/workflow.md`. If the repo's is older, say so in one line (do not update it unprompted). Go to step 1.
 - **Missing** → the repo is not set up. First explain in three short lines what is about to happen: this workflow keeps work as tickets in `jrg/tickets/` and project knowledge in `jrg/knowledge/`, all plain files in the repo, so any session can pick up where the last one stopped; Claude keeps them current; `/jrg-help` explains more. Then look for existing workflow or planning docs: a `.claude/` folder with docs or commands, `docs/`, `HANDOFF.md`, `STATUS.md`, `TODO*`, `ROADMAP*`, task or ticket folders, plan or spec files, and a `DEVELOPMENT.md` beyond a few lines.
   - **Nothing found** → follow [setup.md](setup.md), then step 1.
-  - **Found** → report what was found (paths and line counts, one line each) and say this repo needs a migration. On the user's go-ahead, follow [migration/migrate.md](migration/migrate.md). That sets up the workflow and creates the migration as tickets; then continue at step 1, where the first migration ticket is the recommended pick.
+  - **Found** → list what was found (paths and line counts, one line each), then ask one question: **migrate these docs into jrg, or start clean alongside them?**
+    - **Migrate** → follow [migration/migrate.md](migration/migrate.md). The answer is the user's consent for the whole migration. Then continue at step 1, where the first migration ticket is the recommended pick.
+    - **Start clean** → follow [setup.md](setup.md), then step 1. From then on no jrg skill reads docs outside `jrg/`, and this question is not asked again. `/jrg-start migrate` starts a migration later.
 
 ## 1. Regenerate and read the status
 
