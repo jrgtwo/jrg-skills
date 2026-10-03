@@ -1,0 +1,14 @@
+{
+  "name": "jrg",
+  "owner": {
+    "name": "jrgtwo"
+  },
+  "description": "jrg-skills as an installable Claude Code plugin.",
+  "plugins": [
+    {
+      "name": "jrg-skills",
+      "source": "./",
+      "description": "A ticket workflow for Claude Code: setup and migration, plans, tickets, holding lists and grooming."
+    }
+  ]
+}
