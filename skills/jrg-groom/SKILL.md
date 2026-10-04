@@ -7,13 +7,17 @@ argument-hint: "[deferred | backlog | pre-migration]"
 
 # Groom a holding list
 
+Hub: `${user_config.hub_path}` · Plugin: `${CLAUDE_PLUGIN_ROOT}`
+
+**First, find the project root:** follow `${CLAUDE_PLUGIN_ROOT}/skills/jrg-start/root.md`, and use the root, status command, templates folder and workflow file it gives. If you write to a hub, finish with its **Hub sync** step.
+
 $ARGUMENTS
 
-Rules: `jrg/tickets/workflow.md` — Holding lists, Grooming. **The user decides every entry; never bulk-classify.**
+Rules: the workflow file — Holding lists, Grooming. **The user decides every entry; never bulk-classify.**
 
 ## With no list named
 
-Show each list in `jrg/tickets/` (deferred, backlog, and pre-migration if it exists) with its entry count and `Last groomed` date, and ask which to groom.
+Show each list in `<root>/tickets/` (deferred, backlog, and pre-migration if it exists) with its entry count and `Last groomed` date, and ask which to groom.
 
 ## With a list named
 
@@ -24,7 +28,7 @@ Read the list's header (`What`, `Add when`, `Remove when`). Say how many entries
 3. Recommend one outcome, with the reason in a line.
 4. **Wait.** The user decides.
 
-For pre-migration, if `jrg/tickets/migration/index.md` says `Mode: subagents`, have a subagent check the next few entries against the code while the user decides the current one.
+For pre-migration, if `<root>/tickets/migration/index.md` says `Mode: subagents`, have a subagent check the next few entries against the code while the user decides the current one.
 
 The user can stop at any point. Every decision is written as it is made, so stopping loses nothing; the next session continues at the next entry.
 
@@ -36,10 +40,10 @@ The user can stop at any point. Every decision is written as it is made, so stop
 - **Deferred → backlog** — move it in the backlog's format.
 - **→ ticket** — create it with `/jrg-ticket`, then remove the entry.
 - **Pre-migration only:**
-  - **History** (it shipped) — add a dated line to `jrg/knowledge/history.md` (newest first; create the file if missing), saying what shipped and, if the old doc says, why. Remove the entry.
+  - **History** (it shipped) — add a dated line to `<root>/knowledge/history.md` (newest first; create the file if missing), saying what shipped and, if the old doc says, why. Remove the entry.
   - **→ backlog / → deferred** — rewrite it in that list's format, as checked today, and remove it here.
-  - When pre-migration is empty, delete the folder and its row in `jrg/tickets/index.md`.
+  - When pre-migration is empty, delete the folder and its row in `<root>/tickets/index.md`.
 
 ## Finish
 
-Update `Last groomed` in the list's header. Run `python3 jrg/tickets/status.py`. Report counts: kept, dropped, merged, promoted, filed as history. An entry that cannot be settled quickly stays, marked `unverified: <date>`. Fixing something found is a ticket, not part of the pass.
+Update `Last groomed` in the list's header. Run the status command. Report counts: kept, dropped, merged, promoted, filed as history. An entry that cannot be settled quickly stays, marked `unverified: <date>`. Fixing something found is a ticket, not part of the pass.

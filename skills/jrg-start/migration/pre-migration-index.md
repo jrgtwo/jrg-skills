@@ -12,7 +12,7 @@ Entry format:
 ```markdown
 ## <one line naming the item, in the old doc's words>
 
-- From: `<old path>` lines <a–b> (now in `jrg/legacy/`)
+- From: `<old path>` lines <a–b> (in a repo root it moves to `legacy/` at the end of the migration; in a hub it stays in the repo)
 - Old state: shipped | in progress | queued | idea | parked | known issue | dropped
 - Imported: <date>
 

@@ -1,0 +1,766 @@
+#!/usr/bin/env python3
+"""jrg hub helper: find a project's root, and manage the hub's project list.
+
+The skills call this instead of working paths out themselves, so the answers are exact.
+Every command prints JSON. Git is used read-only (remote URL, first commit, top level).
+
+  jrg-hub resolve  --hub H [--cwd P]            where is this folder's project root?
+  jrg-hub identify PATH                         a repo's identity (normalized remote, or first commit)
+  jrg-hub init     --hub H                      create an empty hub at H
+  jrg-hub list     --hub H [--archived|--all]   projects: path on this machine, current work, last worked
+  jrg-hub scan     --hub H                      search this machine's locations, record what matches
+  jrg-hub location --hub H add|remove PATH      manage this machine's project locations
+  jrg-hub register --hub H --path P [--name N] [--private] [--stats hidden|aggregated|anonymous]
+  jrg-hub set-path --hub H --name N --path P    record one project's path on this machine
+  jrg-hub relink   --hub H --name N --path P    the project's remote changed (or a new project got its repo): adopt P's identity
+  jrg-hub new      --hub H --name N [--private] a project with no repo yet
+  jrg-hub archive  --hub H --name N             hide from the active list (notes stay)
+  jrg-hub unarchive --hub H --name N
+  jrg-hub remove   --hub H --name N --yes       delete the project's hub folder and entry
+  jrg-hub sync-status --hub H [--fetch]         read-only: uncommitted changes, commits ahead/behind the remote
+  jrg-hub config   --hub H [KEY=VALUE ...]      this machine's hub settings (e.g. auto_sync=true)
+  jrg-hub branch   --path P                     read-only: the repo's current and default branch
+  jrg-hub merged   --path P --branch B          is branch B in the default branch? (fetches first; falls back to gh)
+  jrg-hub visibility --hub H (--path P | --self) [--set public|private]   is a repo public or private? (gh, read-only; else remembered answer)
+  jrg-hub privacy-check --hub H                 private projects listed in a public hub
+  jrg-hub make-private --hub H --name N         move a project into the hub's gitignored private/ folder
+  jrg-hub stats    --hub H [--write]            ticket counts per project; --write renders stats/index.md (public-safe)
+  jrg-hub upgrade  (--hub H | --root R)         replace workflow.md, status.py and templates with the plugin's current ones
+
+--hub may be omitted when the JRG_HUB environment variable is set.
+"""
+import argparse
+import json
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+SKIP_DIRS = {"node_modules", ".git", "dist", "build", ".venv", "venv", "__pycache__", ".cache"}
+SCAN_DEPTH = 3
+
+
+# ── git, read-only ───────────────────────────────────────────────────────────
+
+def git(path, *args):
+    r = subprocess.run(["git", "-C", str(path), *args], capture_output=True, text=True)
+    return r.stdout.strip() if r.returncode == 0 else None
+
+
+def normalize_remote(url):
+    """`git@github.com:o/r.git`, `https://github.com/o/r` and `ssh://git@github.com/o/r` → `github.com/o/r`."""
+    u = url.strip()
+    u = re.sub(r"^[a-z+]+://", "", u)        # scheme
+    u = re.sub(r"^[^@/]+@", "", u)            # user@
+    u = re.sub(r"^([^/:]+):(?!\d+/)", r"\1/", u)  # scp-style host:path
+    u = re.sub(r"^([^/:]+):\d+/", r"\1/", u)  # host:port/
+    u = re.sub(r"\.git/?$", "", u).rstrip("/")
+    return u.lower()
+
+
+def identify(path):
+    """Identity of the project at `path`: remote URL, else first commit, else None (plain folder)."""
+    top = git(path, "rev-parse", "--show-toplevel")
+    if not top:
+        return {"git": False, "top": None, "identity": None, "subdir": None}
+    sub = os.path.relpath(Path(path).resolve(), Path(top).resolve())
+    remote = git(top, "config", "--get", "remote.origin.url")
+    if remote:
+        ident = normalize_remote(remote)
+    else:
+        first = git(top, "rev-list", "--max-parents=0", "HEAD")
+        ident = f"commit:{first.splitlines()[0]}" if first else None
+    return {"git": True, "top": top, "identity": ident, "subdir": None if sub == "." else sub}
+
+
+# ── hub files ────────────────────────────────────────────────────────────────
+
+def hub_path(arg):
+    h = arg or os.environ.get("JRG_HUB")
+    if not h or "${" in h:
+        fail("no hub set", hint="set the plugin's hub_path option, or pass --hub")
+    return Path(h).expanduser().resolve()
+
+
+def read_json(p, default):
+    try:
+        return json.loads(Path(p).read_text())
+    except FileNotFoundError:
+        return default
+
+
+def write_json(p, data):
+    Path(p).parent.mkdir(parents=True, exist_ok=True)
+    Path(p).write_text(json.dumps(data, indent=2) + "\n")
+
+
+def shared(hub):
+    return read_json(hub / "projects.json", {"projects": []})
+
+
+def local(hub):
+    return read_json(hub / ".local" / "paths.json", {"locations": [], "paths": {}})
+
+
+def private_projects(hub):
+    out = []
+    for f in sorted((hub / "private").glob("*/project.json")):
+        d = read_json(f, {})
+        d["name"] = f.parent.name
+        out.append(d)
+    return out
+
+
+def all_projects(hub):
+    return [dict(p, private=False) for p in shared(hub)["projects"]] + \
+           [dict(p, private=True) for p in private_projects(hub)]
+
+
+def root_of(hub, proj):
+    return hub / ("private" if proj["private"] else "projects") / proj["name"]
+
+
+def match(hub, ident_info):
+    for p in all_projects(hub):
+        if p.get("identity") and p["identity"] == ident_info["identity"] and p.get("subdir") == ident_info["subdir"]:
+            return p
+    return None
+
+
+def remember_path(hub, name, path):
+    loc = local(hub)
+    paths = loc["paths"].setdefault(name, [])
+    path = str(Path(path).resolve())
+    if path not in paths:
+        paths.append(path)
+    write_json(hub / ".local" / "paths.json", loc)
+
+
+def project_folder_for(hub, cwd):
+    """The registered path that contains cwd (longest match), and its project name."""
+    cwd = Path(cwd).resolve()
+    best = None
+    for name, paths in local(hub)["paths"].items():
+        for p in paths:
+            pp = Path(p)
+            if cwd == pp or pp in cwd.parents:
+                if best is None or len(str(pp)) > len(str(best[1])):
+                    best = (name, pp)
+    return best
+
+
+# ── commands ────────────────────────────────────────────────────────────────
+
+def in_place(cwd, top):
+    for base in [b for b in (top, cwd) if b]:
+        if (base / "jrg" / "tickets" / "index.md").exists():
+            return base
+    return None
+
+
+def cmd_resolve(a):
+    cwd = Path(a.cwd or os.getcwd()).resolve()
+    info = identify(cwd)
+    top = Path(info["top"]) if info["top"] else None
+    local_jrg = in_place(cwd, top)
+
+    h = a.hub or os.environ.get("JRG_HUB")
+    hub = Path(h).expanduser().resolve() if h and "${" not in h else None
+    if hub and not (hub / "projects.json").exists():
+        hub = None
+
+    if hub:
+        # in the hub itself
+        if cwd == hub or hub in cwd.parents:
+            return out(mode="hub-root", hub=str(hub), projects=active_names(hub))
+        projects = {p["name"]: p for p in all_projects(hub)}
+        # 1. registered in the hub wins — even over an in-repo jrg/
+        known = project_folder_for(hub, cwd)
+        if known and known[0] in projects:
+            return found(hub, projects[known[0]])
+        if info["identity"]:
+            p = match(hub, info)
+            if p:
+                remember_path(hub, p["name"], top / info["subdir"] if info["subdir"] else top)
+                return found(hub, p, newly_linked=True)
+
+    # 2. in place
+    if local_jrg:
+        return out(mode="in-place", root=str(local_jrg / "jrg"), project=local_jrg.name,
+                   templates=str(local_jrg / "jrg/tickets/templates"), workflow=str(local_jrg / "jrg/tickets/workflow.md"),
+                   status=f"python3 {local_jrg / 'jrg/tickets/status.py'}")
+
+    if not hub:
+        return out(mode="no-hub", cwd=str(cwd), git=info["git"], hint=(f"{h} is not a hub (no projects.json)" if h and "${" not in h else None))
+
+    # 3. a new project waiting for its repo? match by folder name
+    folder = (Path(info["subdir"]).name if info["subdir"] else top.name) if top else cwd.name
+    pending = [p for p in all_projects(hub) if not p.get("identity") and p["name"] == folder and not p.get("archived")]
+    if pending:
+        return out(mode="name-match", hub=str(hub), project=pending[0]["name"], path=str(top or cwd), identity=info["identity"],
+                   hint="ask whether this folder is that project; if yes: jrg-hub relink --name <project> --path <path>")
+
+    if info["identity"]:
+        return out(mode="unregistered", hub=str(hub), path=str(top), identity=info["identity"], subdir=info["subdir"], suggested_name=folder)
+    return out(mode="not-a-project", hub=str(hub), cwd=str(cwd), projects=active_names(hub))
+
+
+def active_names(hub):
+    return [p["name"] for p in all_projects(hub) if not p.get("archived")]
+
+
+def found(hub, p, newly_linked=False):
+    root = root_of(hub, p)
+    return out(mode="private" if p["private"] else "hub", project=p["name"], root=str(root), hub=str(hub),
+               templates=str(hub / "templates"), workflow=str(hub / "workflow.md"), archived=bool(p.get("archived")),
+               status=f"cd {hub} && python3 status.py {root.relative_to(hub).as_posix()}", newly_linked=newly_linked)
+
+
+def cmd_identify(a):
+    out(**identify(Path(a.path)))
+
+
+def cmd_init(a):
+    hub = Path(a.hub or os.environ.get("JRG_HUB", "")).expanduser().resolve()
+    if (hub / "projects.json").exists():
+        return out(created=False, hub=str(hub), reason="already a hub")
+    scaffold = Path(__file__).resolve().parent.parent / "skills" / "jrg-start" / "scaffold" / "jrg"
+    hub.mkdir(parents=True, exist_ok=True)
+    write_json(hub / "projects.json", {"projects": []})
+    (hub / ".gitignore").write_text("private/\n.local/\n")
+    (hub / "status.py").write_text((scaffold / "tickets" / "status.py").read_text())
+    (hub / "workflow.md").write_text((scaffold / "tickets" / "workflow.md").read_text())
+    tdir = hub / "templates"
+    tdir.mkdir(exist_ok=True)
+    for t in (scaffold / "tickets" / "templates").glob("*.md"):
+        (tdir / t.name).write_text(t.read_text())
+    for d in ("projects", "shared/knowledge", "stats", "private", ".local"):
+        (hub / d).mkdir(parents=True, exist_ok=True)
+    (hub / "README.md").write_text(
+        "# jrg hub\n\nTickets and knowledge for every project, in one repo. Managed by the jrg skills "
+        "(`/jrg-start`, `/jrg-projects`).\n\n- `projects/<name>/` — each project's tickets, knowledge and legacy\n"
+        "- `shared/knowledge/` — facts that apply to several projects\n- `stats/` — generated stats pages\n"
+        "- `workflow.md`, `status.py`, `templates/` — one shared copy for every project\n"
+        "- `projects.json` — the project list (no machine-specific data)\n"
+        "- `private/`, `.local/` — gitignored: private projects, and this machine's paths\n")
+    write_json(hub / ".local" / "paths.json", {"locations": [], "paths": {}})
+    out(created=True, hub=str(hub))
+
+
+def status_summary(root):
+    """In-progress and blocked titles and the next ready ticket, from the project's STATUS.md."""
+    f = root / "tickets" / "STATUS.md"
+    if not f.exists():
+        return {"in_progress": [], "blocked": [], "next_ready": None}
+    text = f.read_text()
+    def items(heading):
+        m = re.search(rf"^## {heading}\s*$(.*?)(?=^## |\Z)", text, re.M | re.S)
+        return re.findall(r"^- \[([^\]]+)\]", m.group(1), re.M) if m else []
+    nxt = re.search(r"^## Next ready\s*$(.*?)(?=^## |\Z)", text, re.M | re.S)
+    nr = re.findall(r"\[([^\]]+)\]\(", nxt.group(1)) if nxt else []
+    return {"in_progress": items("In progress"), "blocked": items("Blocked"), "next_ready": nr[0] if nr else None}
+
+
+def last_worked(root):
+    times = [f.stat().st_mtime for f in root.rglob("*.md") if f.name != "STATUS.md"] if root.exists() else []
+    if not times:
+        return None
+    import datetime
+    return datetime.date.fromtimestamp(max(times)).isoformat()
+
+
+def cmd_list(a):
+    hub = hub_path(a.hub)
+    paths = local(hub)["paths"]
+    rows = []
+    for p in all_projects(hub):
+        archived = bool(p.get("archived"))
+        if (a.archived and not archived) or (not a.archived and not a.all and archived):
+            continue
+        root = root_of(hub, p)
+        here = [x for x in paths.get(p["name"], []) if Path(x).exists()]
+        rows.append(dict({"name": p["name"], "private": p["private"], "archived": archived, "identity": p.get("identity"),
+                          "new": not p.get("identity"), "paths": here, "on_this_machine": bool(here),
+                          "last_worked": last_worked(root)}, **status_summary(root)))
+    rows.sort(key=lambda r: r["last_worked"] or "", reverse=True)
+    out(hub=str(hub), locations=local(hub)["locations"], projects=rows)
+
+
+def cmd_location(a):
+    hub = hub_path(a.hub)
+    loc = local(hub)
+    path = str(Path(a.path).expanduser().resolve())
+    if a.action == "add" and path not in loc["locations"]:
+        loc["locations"].append(path)
+    if a.action == "remove" and path in loc["locations"]:
+        loc["locations"].remove(path)
+    write_json(hub / ".local" / "paths.json", loc)
+    out(locations=loc["locations"])
+
+
+def repos_under(base, depth=SCAN_DEPTH):
+    base = Path(base)
+    if not base.is_dir():
+        return
+    stack = [(base, 0)]
+    while stack:
+        d, n = stack.pop()
+        if (d / ".git").exists():
+            yield d
+            continue
+        if n >= depth:
+            continue
+        try:
+            for c in d.iterdir():
+                if c.is_dir() and not c.is_symlink() and c.name not in SKIP_DIRS and not c.name.startswith("."):
+                    stack.append((c, n + 1))
+        except PermissionError:
+            pass
+
+
+def cmd_scan(a):
+    hub = hub_path(a.hub)
+    loc = local(hub)
+    projects = all_projects(hub)
+    linked, unregistered = [], []
+    for base in loc["locations"]:
+        for repo in repos_under(base):
+            info = identify(repo)
+            hits = [p for p in projects if p.get("identity") == info["identity"]]
+            if not hits:
+                unregistered.append({"path": str(repo), "identity": info["identity"]})
+            for p in hits:
+                target = repo / p["subdir"] if p.get("subdir") else repo
+                remember_path(hub, p["name"], target)
+                linked.append({"project": p["name"], "path": str(target)})
+    paths = local(hub)["paths"]
+    missing = [p["name"] for p in projects if not any(Path(x).exists() for x in paths.get(p["name"], []))]
+    out(linked=linked, not_on_this_machine=missing, unregistered_repos=unregistered)
+
+
+def cmd_register(a):
+    hub = hub_path(a.hub)
+    path = Path(a.path).expanduser().resolve()
+    info = identify(path)
+    name = a.name or (Path(info["subdir"]).name if info["subdir"] else (Path(info["top"]).name if info["top"] else path.name))
+    if any(p["name"] == name for p in all_projects(hub)):
+        fail(f"a project named {name!r} already exists", hint="pass --name")
+    entry = {"identity": info["identity"], "subdir": info["subdir"]}
+    if a.private:
+        entry["stats"] = a.stats or "aggregated"
+        root = hub / "private" / name
+        write_json(root / "project.json", entry)
+    else:
+        data = shared(hub)
+        data["projects"].append(dict(name=name, **entry))
+        write_json(hub / "projects.json", data)
+        root = hub / "projects" / name
+    for d in ("tickets", "knowledge", "legacy"):
+        (root / d).mkdir(parents=True, exist_ok=True)
+    remember_path(hub, name, path)
+    out(registered=name, private=a.private, root=str(root), identity=info["identity"])
+
+
+def cmd_set_path(a):
+    hub = hub_path(a.hub)
+    if a.name not in {p["name"] for p in all_projects(hub)}:
+        fail(f"no project named {a.name!r}")
+    remember_path(hub, a.name, a.path)
+    out(project=a.name, paths=local(hub)["paths"][a.name])
+
+
+def cmd_relink(a):
+    hub = hub_path(a.hub)
+    info = identify(Path(a.path).expanduser())
+    if not info["identity"]:
+        fail("not a git repo with a remote or commits", hint="use set-path for plain folders")
+    data = shared(hub)
+    for p in data["projects"]:
+        if p["name"] == a.name:
+            old = p.get("identity")
+            p["identity"], p["subdir"] = info["identity"], info["subdir"]
+            write_json(hub / "projects.json", data)
+            remember_path(hub, a.name, a.path)
+            return out(project=a.name, old_identity=old, identity=info["identity"])
+    pj = hub / "private" / a.name / "project.json"
+    if pj.exists():
+        d = read_json(pj, {})
+        old = d.get("identity")
+        d["identity"], d["subdir"] = info["identity"], info["subdir"]
+        write_json(pj, d)
+        remember_path(hub, a.name, a.path)
+        return out(project=a.name, old_identity=old, identity=info["identity"])
+    fail(f"no project named {a.name!r}")
+
+
+def find_project(hub, name):
+    for p in all_projects(hub):
+        if p["name"] == name:
+            return p
+    fail(f"no project named {name!r}")
+
+
+def set_flag(hub, name, **fields):
+    p = find_project(hub, name)
+    if p["private"]:
+        pj = hub / "private" / name / "project.json"
+        d = read_json(pj, {}); d.update(fields); write_json(pj, d)
+    else:
+        data = shared(hub)
+        for e in data["projects"]:
+            if e["name"] == name:
+                e.update(fields)
+        write_json(hub / "projects.json", data)
+
+
+def cmd_new(a):
+    hub = hub_path(a.hub)
+    if any(p["name"] == a.name for p in all_projects(hub)):
+        fail(f"a project named {a.name!r} already exists")
+    entry = {"identity": None, "subdir": None}
+    if a.private:
+        root = hub / "private" / a.name
+        write_json(root / "project.json", dict(entry, stats=a.stats or "aggregated"))
+    else:
+        data = shared(hub); data["projects"].append(dict(name=a.name, **entry)); write_json(hub / "projects.json", data)
+        root = hub / "projects" / a.name
+    for d in ("tickets", "knowledge", "legacy"):
+        (root / d).mkdir(parents=True, exist_ok=True)
+    out(created=a.name, private=a.private, root=str(root),
+        status=f"cd {hub} && python3 status.py {root.relative_to(hub).as_posix()}", templates=str(hub / "templates"), workflow=str(hub / "workflow.md"))
+
+
+def cmd_archive(a):
+    hub = hub_path(a.hub); set_flag(hub, a.name, archived=True); out(project=a.name, archived=True)
+
+
+def cmd_unarchive(a):
+    hub = hub_path(a.hub); set_flag(hub, a.name, archived=False); out(project=a.name, archived=False)
+
+
+def cmd_remove(a):
+    hub = hub_path(a.hub)
+    p = find_project(hub, a.name)
+    if not a.yes:
+        fail("remove needs --yes", hint="ask the user first: this deletes the project's hub folder")
+    import shutil
+    root = root_of(hub, p)
+    if root.exists():
+        shutil.rmtree(root)
+    if not p["private"]:
+        data = shared(hub); data["projects"] = [e for e in data["projects"] if e["name"] != a.name]; write_json(hub / "projects.json", data)
+    loc = local(hub); loc["paths"].pop(a.name, None); write_json(hub / ".local" / "paths.json", loc)
+    out(removed=a.name, private=p["private"])
+
+
+def machine_config(hub):
+    return read_json(hub / ".local" / "settings.json", {})
+
+
+def cmd_config(a):
+    hub = hub_path(a.hub)
+    cfg = machine_config(hub)
+    for kv in a.pairs:
+        k, _, v = kv.partition("=")
+        cfg[k] = {"true": True, "false": False}.get(v.lower(), v)
+    if a.pairs:
+        write_json(hub / ".local" / "settings.json", cfg)
+    out(**cfg)
+
+
+def cmd_sync_status(a):
+    hub = hub_path(a.hub)
+    if not (hub / ".git").exists():
+        return out(git=False, auto_sync=bool(machine_config(hub).get("auto_sync")))
+    if a.fetch:
+        subprocess.run(["git", "-C", str(hub), "fetch", "--quiet"], capture_output=True, timeout=20)
+    dirty = bool(git(hub, "status", "--porcelain"))
+    upstream = git(hub, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}")
+    ahead = behind = 0
+    if upstream:
+        counts = git(hub, "rev-list", "--left-right", "--count", "HEAD...@{u}")
+        if counts:
+            ahead, behind = (int(x) for x in counts.split())
+    out(git=True, branch=git(hub, "rev-parse", "--abbrev-ref", "HEAD"), upstream=upstream, uncommitted=dirty,
+        ahead=ahead, behind=behind, auto_sync=bool(machine_config(hub).get("auto_sync")))
+
+
+def default_branch(top):
+    ref = git(top, "symbolic-ref", "--short", "refs/remotes/origin/HEAD")
+    if ref:
+        return ref.split("/", 1)[1]
+    for b in ("main", "master"):
+        if git(top, "rev-parse", "--verify", "--quiet", f"refs/heads/{b}") is not None:
+            return b
+    return None
+
+
+def cmd_branch(a):
+    info = identify(Path(a.path).expanduser())
+    if not info["git"]:
+        return out(git=False)
+    top = info["top"]
+    cur = git(top, "rev-parse", "--abbrev-ref", "HEAD")
+    dflt = default_branch(top)
+    out(git=True, current=cur, default=dflt, on_default=(cur == dflt))
+
+
+def cmd_merged(a):
+    info = identify(Path(a.path).expanduser())
+    if not info["git"]:
+        return out(merged=None, reason="not a git repo")
+    top = info["top"]
+    subprocess.run(["git", "-C", top, "fetch", "--quiet"], capture_output=True, timeout=30)
+    dflt = default_branch(top)
+    if not dflt:
+        return out(merged=None, reason="no default branch found")
+    target = f"origin/{dflt}" if git(top, "rev-parse", "--verify", "--quiet", f"origin/{dflt}") is not None else dflt
+    for ref in (a.branch, f"origin/{a.branch}"):
+        if git(top, "rev-parse", "--verify", "--quiet", ref) is not None:
+            r = subprocess.run(["git", "-C", top, "merge-base", "--is-ancestor", ref, target], capture_output=True)
+            if r.returncode == 0:
+                return out(merged=True, how="ancestry", into=target)
+    # squash or rebase merges leave no ancestry: ask GitHub, read-only
+    try:
+        r = subprocess.run(["gh", "pr", "view", a.branch, "--json", "state,mergedAt"], capture_output=True, text=True, cwd=top, timeout=20)
+        if r.returncode == 0:
+            d = json.loads(r.stdout)
+            return out(merged=d.get("state") == "MERGED", how="gh", state=d.get("state"), merged_at=d.get("mergedAt"))
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+    out(merged=None, reason="no ancestry and no PR found — ask the user", into=target)
+
+
+def visibility_of(hub, path=None, identity=None):
+    """'public' | 'private' | None (unknown). Asks gh (read-only); falls back to an answer remembered on this machine."""
+    if identity is None and path is not None:
+        identity = identify(Path(path).expanduser())["identity"]
+    remembered = machine_config(hub).get("visibility", {})
+    if identity and identity in remembered:
+        return remembered[identity]
+    if identity and not identity.startswith("commit:"):
+        host, _, repo = identity.partition("/")
+        try:
+            env = dict(os.environ, GH_HOST=host) if host != "github.com" else None
+            r = subprocess.run(["gh", "repo", "view", repo, "--json", "visibility"], capture_output=True, text=True, timeout=20, env=env)
+            if r.returncode == 0:
+                v = json.loads(r.stdout).get("visibility", "").lower()
+                return "public" if v == "public" else "private" if v in ("private", "internal") else None
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            pass
+    return None
+
+
+def hub_identity(hub):
+    return identify(hub)["identity"]
+
+
+def cmd_visibility(a):
+    hub = hub_path(a.hub)
+    identity = hub_identity(hub) if a.self else identify(Path(a.path).expanduser())["identity"]
+    if a.set:
+        cfg = machine_config(hub); cfg.setdefault("visibility", {})[identity] = a.set
+        write_json(hub / ".local" / "settings.json", cfg)
+    v = hub_visibility(hub) if a.self else visibility_of(hub, identity=identity)
+    out(identity=identity, visibility=v, hint=None if v else "unknown — ask the user, then record it with --set")
+
+
+def hub_visibility(hub):
+    ident = hub_identity(hub)
+    if not ident or ident.startswith("commit:"):
+        return "private"  # no remote: never pushed anywhere
+    return visibility_of(hub, identity=ident)
+
+
+def cmd_privacy_check(a):
+    hub = hub_path(a.hub)
+    hv = hub_visibility(hub)
+    exposed, unknown = [], []
+    if hv != "private":
+        for p in shared(hub)["projects"]:
+            if not p.get("identity"):
+                continue
+            v = visibility_of(hub, identity=p["identity"])
+            if v == "private":
+                exposed.append(p["name"])
+            elif v is None:
+                unknown.append(p["name"])
+    out(hub_visibility=hv, private_projects_in_public_hub=exposed if hv == "public" else [],
+        unknown_projects=unknown if hv == "public" else [], hub_visibility_unknown=hv is None)
+
+
+def cmd_make_private(a):
+    hub = hub_path(a.hub)
+    data = shared(hub)
+    entry = next((p for p in data["projects"] if p["name"] == a.name), None)
+    if not entry:
+        fail(f"no public-list project named {a.name!r}")
+    import shutil
+    src, dst = hub / "projects" / a.name, hub / "private" / a.name
+    if dst.exists():
+        fail(f"{dst} already exists")
+    if src.exists():
+        shutil.move(str(src), str(dst))
+    dst.mkdir(parents=True, exist_ok=True)
+    write_json(dst / "project.json", {k: v for k, v in entry.items() if k != "name"} | {"stats": entry.get("stats", "aggregated")})
+    data["projects"] = [p for p in data["projects"] if p["name"] != a.name]
+    write_json(hub / "projects.json", data)
+    out(project=a.name, moved_to=str(dst), note="already-pushed history of this project stays in the hub's git history")
+
+
+def ticket_counts(root):
+    """Counts by status, plus tickets closed in the last 7 days (by file modification time)."""
+    import time
+    counts = {k: 0 for k in ("todo", "in_progress", "blocked", "awaiting_merge", "done", "cancelled")}
+    week = 0
+    tickets = root / "tickets"
+    if not tickets.exists():
+        return counts, 0
+    for f in tickets.glob("*/[0-9]*/*.md"):
+        if f.name == "index.md":
+            continue
+        m = re.search(r"^- Status:\s*(\S+)", f.read_text(), re.M)
+        st = m.group(1) if m else None
+        if st in counts:
+            counts[st] += 1
+            if st == "done" and time.time() - f.stat().st_mtime < 7 * 86400:
+                week += 1
+    return counts, week
+
+
+def private_alias(hub, name):
+    pj = hub / "private" / name / "project.json"
+    d = read_json(pj, {})
+    if not d.get("alias"):
+        used = {read_json(f, {}).get("alias") for f in (hub / "private").glob("*/project.json")}
+        n = 1
+        while f"Private project {n}" in used:
+            n += 1
+        d["alias"] = f"Private project {n}"
+        write_json(pj, d)
+    return d["alias"]
+
+
+def cmd_stats(a):
+    hub = hub_path(a.hub)
+    rows, agg = [], {"projects": 0, "open": 0, "in_progress": 0, "blocked": 0, "closed_week": 0}
+    for p in all_projects(hub):
+        if p.get("archived"):
+            continue
+        counts, week = ticket_counts(root_of(hub, p))
+        open_ = counts["todo"] + counts["in_progress"] + counts["blocked"] + counts["awaiting_merge"]
+        row = {"name": p["name"], "private": p["private"], "open": open_, "in_progress": counts["in_progress"] + counts["awaiting_merge"],
+               "blocked": counts["blocked"], "closed_week": week, "done": counts["done"]}
+        if p["private"]:
+            mode = p.get("stats", "aggregated")
+            if mode == "aggregated":
+                agg["projects"] += 1
+                for k in ("open", "in_progress", "blocked", "closed_week"):
+                    agg[k] += row[k]
+                row["public"] = None
+            elif mode == "anonymous":
+                row["public"] = dict(row, name=private_alias(hub, p["name"]))
+            else:
+                row["public"] = None
+        else:
+            row["public"] = row
+        rows.append(row)
+    if a.write:
+        import datetime
+        lines = ["# Stats", "", f"Generated {datetime.date.today().isoformat()} by `jrg-hub stats --write`. Numbers only for private projects.", "",
+                 "| Project | Open | In progress | Blocked | Closed this week |", "| --- | --- | --- | --- | --- |"]
+        for r in rows:
+            pub = r.get("public")
+            if pub:
+                lines.append(f"| {pub['name']} | {pub['open']} | {pub['in_progress']} | {pub['blocked']} | {pub['closed_week']} |")
+        if agg["projects"]:
+            lines.append(f"| Private work ({agg['projects']} project{'s' if agg['projects'] > 1 else ''}) | {agg['open']} | {agg['in_progress']} | {agg['blocked']} | {agg['closed_week']} |")
+        shown = [r["public"] for r in rows if r.get("public")]  # hidden projects count nowhere on the public page
+        tot = {k: sum(r[k] for r in shown) + agg[k] for k in ("open", "in_progress", "blocked", "closed_week")}
+        lines += ["", f"**Totals:** {tot['open']} open · {tot['in_progress']} in progress · {tot['blocked']} blocked · {tot['closed_week']} closed this week", ""]
+        (hub / "stats").mkdir(exist_ok=True)
+        (hub / "stats" / "index.md").write_text("\n".join(lines))
+    out(projects=[{k: v for k, v in r.items() if k != "public"} for r in rows], private_aggregate=agg,
+        written=str(hub / "stats" / "index.md") if a.write else None)
+
+
+def scaffold_version(path):
+    m = re.search(r"jrg-scaffold:\s*(\d+)", Path(path).read_text()) if Path(path).exists() else None
+    return int(m.group(1)) if m else None
+
+
+def cmd_upgrade(a):
+    """Replace the workflow's shared files — never tickets, knowledge or legacy."""
+    scaffold = Path(__file__).resolve().parent.parent / "skills" / "jrg-start" / "scaffold" / "jrg" / "tickets"
+    if a.root:
+        dest = Path(a.root).expanduser().resolve() / "tickets"
+        targets = {"workflow.md": dest / "workflow.md", "status.py": dest / "status.py"}
+        tdir = dest / "templates"
+    else:
+        hub = hub_path(a.hub)
+        targets = {"workflow.md": hub / "workflow.md", "status.py": hub / "status.py"}
+        tdir = hub / "templates"
+    before = scaffold_version(targets["workflow.md"])
+    changed = []
+    for name, dst in targets.items():
+        new = (scaffold / name).read_text()
+        if not dst.exists() or dst.read_text() != new:
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            dst.write_text(new)
+            changed.append(str(dst))
+    tdir.mkdir(parents=True, exist_ok=True)
+    for t in (scaffold / "templates").glob("*.md"):
+        dst = tdir / t.name
+        if not dst.exists() or dst.read_text() != t.read_text():
+            dst.write_text(t.read_text())
+            changed.append(str(dst))
+    out(version_before=before, version_now=scaffold_version(scaffold / "workflow.md"), changed=changed)
+
+
+# ── output ──────────────────────────────────────────────────────────────────
+
+def out(**kw):
+    print(json.dumps(kw, indent=2))
+
+
+def fail(msg, hint=None):
+    print(json.dumps({"error": msg, "hint": hint}, indent=2))
+    sys.exit(1)
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    sp = ap.add_subparsers(dest="cmd", required=True)
+    s = sp.add_parser("resolve"); s.add_argument("--hub"); s.add_argument("--cwd"); s.set_defaults(f=cmd_resolve)
+    s = sp.add_parser("identify"); s.add_argument("path"); s.set_defaults(f=cmd_identify)
+    s = sp.add_parser("init"); s.add_argument("--hub"); s.set_defaults(f=cmd_init)
+    s = sp.add_parser("list"); s.add_argument("--hub"); g = s.add_mutually_exclusive_group()
+    g.add_argument("--archived", action="store_true"); g.add_argument("--all", action="store_true"); s.set_defaults(f=cmd_list)
+    s = sp.add_parser("scan"); s.add_argument("--hub"); s.set_defaults(f=cmd_scan)
+    s = sp.add_parser("location"); s.add_argument("--hub"); s.add_argument("action", choices=["add", "remove"]); s.add_argument("path"); s.set_defaults(f=cmd_location)
+    s = sp.add_parser("register"); s.add_argument("--hub"); s.add_argument("--path", required=True); s.add_argument("--name")
+    s.add_argument("--private", action="store_true"); s.add_argument("--stats", choices=["hidden", "aggregated", "anonymous"]); s.set_defaults(f=cmd_register)
+    s = sp.add_parser("set-path"); s.add_argument("--hub"); s.add_argument("--name", required=True); s.add_argument("--path", required=True); s.set_defaults(f=cmd_set_path)
+    s = sp.add_parser("relink"); s.add_argument("--hub"); s.add_argument("--name", required=True); s.add_argument("--path", required=True); s.set_defaults(f=cmd_relink)
+    s = sp.add_parser("new"); s.add_argument("--hub"); s.add_argument("--name", required=True); s.add_argument("--private", action="store_true")
+    s.add_argument("--stats", choices=["hidden", "aggregated", "anonymous"]); s.set_defaults(f=cmd_new)
+    for name, fn in (("archive", cmd_archive), ("unarchive", cmd_unarchive)):
+        s = sp.add_parser(name); s.add_argument("--hub"); s.add_argument("--name", required=True); s.set_defaults(f=fn)
+    s = sp.add_parser("remove"); s.add_argument("--hub"); s.add_argument("--name", required=True); s.add_argument("--yes", action="store_true"); s.set_defaults(f=cmd_remove)
+    s = sp.add_parser("sync-status"); s.add_argument("--hub"); s.add_argument("--fetch", action="store_true"); s.set_defaults(f=cmd_sync_status)
+    s = sp.add_parser("config"); s.add_argument("--hub"); s.add_argument("pairs", nargs="*"); s.set_defaults(f=cmd_config)
+    s = sp.add_parser("branch"); s.add_argument("--path", required=True); s.set_defaults(f=cmd_branch)
+    s = sp.add_parser("merged"); s.add_argument("--path", required=True); s.add_argument("--branch", required=True); s.set_defaults(f=cmd_merged)
+    s = sp.add_parser("visibility"); s.add_argument("--hub"); g = s.add_mutually_exclusive_group(required=True)
+    g.add_argument("--path"); g.add_argument("--self", action="store_true"); s.add_argument("--set", choices=["public", "private"]); s.set_defaults(f=cmd_visibility)
+    s = sp.add_parser("privacy-check"); s.add_argument("--hub"); s.set_defaults(f=cmd_privacy_check)
+    s = sp.add_parser("make-private"); s.add_argument("--hub"); s.add_argument("--name", required=True); s.set_defaults(f=cmd_make_private)
+    s = sp.add_parser("stats"); s.add_argument("--hub"); s.add_argument("--write", action="store_true"); s.set_defaults(f=cmd_stats)
+    s = sp.add_parser("upgrade"); g = s.add_mutually_exclusive_group(required=True); g.add_argument("--hub"); g.add_argument("--root"); s.set_defaults(f=cmd_upgrade)
+    a = ap.parse_args()
+    a.f(a)
+
+
+if __name__ == "__main__":
+    main()

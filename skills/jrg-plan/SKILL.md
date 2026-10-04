@@ -7,9 +7,13 @@ argument-hint: "[what to plan | plan name | questions]"
 
 # Plan
 
+Hub: `${user_config.hub_path}` · Plugin: `${CLAUDE_PLUGIN_ROOT}`
+
+**First, find the project root:** follow `${CLAUDE_PLUGIN_ROOT}/skills/jrg-start/root.md`, and use the root, status command, templates folder and workflow file it gives. If you write to a hub, finish with its **Hub sync** step.
+
 $ARGUMENTS
 
-Rules: `jrg/tickets/workflow.md` — Plans, Decision questions. A plan is tracked like any work: an initiative whose first milestone, `00-plan`, holds one ticket per pass. Any session can resume it from `STATUS.md`.
+Rules: the workflow file — Plans, Decision questions. A plan is tracked like any work: an initiative whose first milestone, `00-plan`, holds one ticket per pass. Any session can resume it from `STATUS.md`.
 
 ## Continue an existing plan
 
@@ -18,8 +22,8 @@ If a plan is named or one is in progress, it is just a ticket in its `00-plan` m
 ## Start a new plan
 
 1. **Name it.** The user's words; slug for folders. Agree an initiative prefix.
-2. **Create the initiative** (`jrg/tickets/<slug>/`, index from template with ledger markers, row in `jrg/tickets/index.md`) and milestone `00-plan`.
-3. **Create the plan folder** `jrg/knowledge/plans/<slug>/` from this skill's `templates/`: `brief.md`, `plan.md`, `decisions.md`.
+2. **Create the initiative** (`<root>/tickets/<slug>/`, index from template with ledger markers, row in `<root>/tickets/index.md`) and milestone `00-plan`.
+3. **Create the plan folder** `<root>/knowledge/plans/<slug>/` from this skill's `templates/`: `brief.md`, `plan.md`, `decisions.md`.
 4. **Create the brief ticket only** (`<PREFIX>-001 — Write the brief`, type `plan`). Later passes are added as the plan's size becomes clear — do not pre-create six tickets for what may be a small change.
 5. Regenerate the views and start the brief now if the user wants.
 
@@ -48,7 +52,7 @@ From `decisions.md`, only entries with `Status: open` (and `parked` if the user 
 - A new question found mid-stream goes into the register as `open` for a later pass — do not add it to the current stream.
 - If the user answers a question in a later session, record it the same way.
 
-After a batch, update the owning sections of `plan.md` and run `python3 jrg/tickets/status.py` so `STATUS.md` shows the remaining open count.
+After a batch, update the owning sections of `plan.md` and run the status command so `STATUS.md` shows the remaining open count.
 
 ## Make the tickets
 
@@ -56,7 +60,7 @@ Run when the readiness pass is done, or when the user asks to turn a ready plan 
 
 ### 1. Check it is ready
 
-Read `jrg/knowledge/plans/<slug>/plan.md` and `decisions.md`. Every open or parked question must list the build work it blocks. If one does not, stop and say which — that is another question pass, not ticketing.
+Read `<root>/knowledge/plans/<slug>/plan.md` and `decisions.md`. Every open or parked question must list the build work it blocks. If one does not, stop and say which — that is another question pass, not ticketing.
 
 ### 2. Propose the milestones
 
@@ -68,15 +72,15 @@ For the agreed milestone, propose its tickets in working order: title, one-line 
 
 Each ticket:
 
-- From `jrg/tickets/templates/ticket.md`; next IDs in the initiative.
+- From `ticket.md` in the templates folder; next IDs in the initiative.
 - `Sources:` link the plan sections and knowledge docs it executes.
 - Acceptance criteria that are observable, taken from the plan — not invented.
 - Listed in its milestone index in working order.
 
 ### 4. Close the plan milestone
 
-Record outcome evidence in `00-plan/index.md` (date, plan link, ticket count). Update the initiative index's Milestones section. Run `python3 jrg/tickets/status.py` and report the milestones and ticket counts, and the first ready ticket.
+Record outcome evidence in `00-plan/index.md` (date, plan link, ticket count). Update the initiative index's Milestones section. Run the status command and report the milestones and ticket counts, and the first ready ticket.
 
 ### Afterwards
 
-When the build is finished, fold the plan's still-true content into the owning `jrg/knowledge/` docs and move `jrg/knowledge/plans/<slug>/` to `jrg/legacy/`, with a row in `jrg/legacy/README.md`. That is the last ticket of the initiative — add it now, in the final milestone, as "Fold the plan into the knowledge docs".
+When the build is finished, fold the plan's still-true content into the owning `<root>/knowledge/` docs and move `<root>/knowledge/plans/<slug>/` to `<root>/legacy/`, with a row in `<root>/legacy/README.md`. That is the last ticket of the initiative — add it now, in the final milestone, as "Fold the plan into the knowledge docs".

@@ -1,12 +1,16 @@
 ---
 name: jrg-help
 description: What these jrg skills are and how to use them
-when_to_use: Use when the user asks what the jrg skills do, how the workflow works, which jrg command to run, or what the files under jrg/tickets or jrg/knowledge are for.
+when_to_use: Use when the user asks what the jrg skills do, how the workflow works, which jrg command to run, or what the jrg ticket and knowledge files are for.
 ---
 
 # jrg help
 
-Explain the workflow to someone who has never seen it. Plain words, short, no jargon left undefined. If the user asked about one skill or one part, answer only that. Otherwise give the overview below, adapted to this repo: if `jrg/tickets/` exists, mention what is in progress (from `jrg/tickets/STATUS.md`); if it does not, say this repo is not set up yet and `/jrg-start` will do it.
+Hub: `${user_config.hub_path}` · Plugin: `${CLAUDE_PLUGIN_ROOT}`
+
+**First, find the project root:** follow `${CLAUDE_PLUGIN_ROOT}/skills/jrg-start/root.md`, and use the root, status command, templates folder and workflow file it gives. If you write to a hub, finish with its **Hub sync** step.
+
+Explain the workflow to someone who has never seen it. Plain words, short, no jargon left undefined. If the user asked about one skill or one part, answer only that. Otherwise give the overview below, adapted to this repo: if `<root>/tickets/` exists, mention what is in progress (from `<root>/tickets/STATUS.md`); if it does not, say this repo is not set up yet and `/jrg-start` will do it.
 
 ## Overview to give
 
@@ -21,18 +25,21 @@ Explain the workflow to someone who has never seen it. Plain words, short, no ja
 | `/jrg-start` | Start a session. Start here |
 | `/jrg-plan` | Think through something big or unclear before building it. Can take several sessions; questions for you can be answered now or later |
 | `/jrg-ticket` | Add a ticket for one clear piece of work, or save progress on the one you're on (including "done" or "blocked") |
+| `/jrg-build` | Build the current ticket with agents: each part built, reviewed independently, then fixed. Used automatically when a project's build mode is multi-agent |
 | `/jrg-split` | Pull extra work that the current ticket needs into its own ticket |
 | `/jrg-defer` | Note something you spotted that might matter, to look at later |
 | `/jrg-backlog` | Note work you definitely want but haven't scheduled |
 | `/jrg-groom` | Go through the deferred and backlog lists one item at a time and decide what to keep |
+| `/jrg-overview` | See where things stand — this project, or all of them — without picking work |
+| `/jrg-projects` | With a hub: see your projects and where each lives on this machine; add folders where you keep projects |
 | `/jrg-help` | This |
 
 You don't have to remember the small ones: say "defer that" or "put that on the backlog" and Claude will use them, and `/jrg-ticket` asks about extra work when it saves progress.
 
-**The files** (all in the repo, so they travel with it)
+**The files** — plain markdown, in one of two places: a `jrg/` folder inside the repo, or, with a hub (one private repo holding every project's notes), the hub's folder for this project. Say which one this project uses.
 
-- `jrg/tickets/` — the work: tickets grouped into milestones, plus `STATUS.md`, a generated summary of everything in flight.
-- `jrg/knowledge/` — how the project works: product, architecture, setup. Kept current, independent of the ticket system.
-- `jrg/legacy/` — old notes kept for history.
+- `<root>/tickets/` — the work: tickets grouped into milestones, plus `STATUS.md`, a generated summary of everything in flight.
+- `<root>/knowledge/` — how the project works: product, architecture, setup. Kept current, independent of the ticket system.
+- `<root>/legacy/` — old notes kept for history.
 
 End by asking whether they want to start (`/jrg-start`) — only if the repo is not set up or nothing is in progress.

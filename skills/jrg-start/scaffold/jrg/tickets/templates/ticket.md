@@ -4,6 +4,7 @@
 - Milestone: [M00 — NAME](index.md)
 - Status: todo
 - Parent: link to the parent ticket (sub-tickets only; delete this line otherwise)
+- Branch: the project branch this is worked on (hub projects, non-default branch only; delete this line otherwise)
 - Depends on: relative links to prerequisite tickets, or None
 - Sources: links to the knowledge docs or plan sections this ticket executes
 
