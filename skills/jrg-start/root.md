@@ -22,6 +22,8 @@ Every jrg skill starts here. The **root** is the folder holding this project's `
    | `unregistered` | A git repo the hub doesn't know | Only `/jrg-start` handles this (its step 0). Any other skill says the repo isn't set up and suggests `/jrg-start` |
    | `no-hub` | No hub configured, and no in-repo `jrg/` | Only `/jrg-start` handles this. Any other skill says the repo isn't set up and suggests `/jrg-start` |
 
+**Never pick a project by guessing** (open files, recent activity, scanning folders). If `resolve` doesn't name one, the user picks.
+
 3. State the root in one line before doing anything else — "Working in **metronome** (hub)" or "(in this repo)" — so a wrong match is caught early.
 
 **The status command** is the `status` value from the output. Wherever a skill says "run the status command", run exactly that.
