@@ -1,6 +1,6 @@
 # jrg-skills
 
-A ticket workflow for Claude Code, shared across machines. Generalized from the football-cards workflow.
+A ticket workflow for Claude Code, shared across machines.
 
 ## Install
 
